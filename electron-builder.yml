@@ -1,0 +1,23 @@
+appId: com.gremlin.annoyance
+productName: Gremlin
+directories:
+  output: dist
+files:
+  - "src/**/*"
+  - "package.json"
+
+npmRebuild: false # zero native deps; keeps mac -> windows cross-builds trivial
+
+mac:
+  target:
+    - target: zip
+      arch: [universal]
+  identity: null # explicitly unsigned; friends use the Gatekeeper recipe in the README
+  category: public.app-category.games
+  extendInfo:
+    LSUIElement: 1 # agent app: no Dock icon, no app menu — the tray is the only chrome
+
+win:
+  target:
+    - target: portable
+      arch: [x64]

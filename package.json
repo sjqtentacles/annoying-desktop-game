@@ -11,8 +11,8 @@
     "dev": "electron . --debug",
     "test": "node --test 'test/unit/*.test.js'",
     "test:e2e": "node --test 'test/e2e/*.e2e.js'",
-    "dist:mac": "electron-builder --mac zip --universal",
-    "dist:win": "electron-builder --win portable",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
     "dist": "npm run dist:mac && npm run dist:win"
   },
   "devDependencies": {
