@@ -1,0 +1,23 @@
+{
+  "name": "gremlin",
+  "productName": "Gremlin",
+  "version": "0.1.0",
+  "description": "An extremely annoying desktop gremlin. Catch it if you can. Catching it makes it worse.",
+  "main": "src/main/index.js",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --debug",
+    "test": "node --test 'test/unit/*.test.js'",
+    "test:e2e": "node --test 'test/e2e/*.e2e.js'",
+    "dist:mac": "electron-builder --mac zip --universal",
+    "dist:win": "electron-builder --win portable",
+    "dist": "npm run dist:mac && npm run dist:win"
+  },
+  "devDependencies": {
+    "electron": "^43.1.0",
+    "electron-builder": "^26.15.3",
+    "playwright-core": "^1.61.1"
+  }
+}
