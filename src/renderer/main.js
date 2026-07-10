@@ -3,6 +3,7 @@ import { createDirector } from './systems/director.js'
 import { createSpawner } from './systems/spawner.js'
 import { createGremlinModel } from './gremlin/behaviors.js'
 import { createSprite, SPRITE_CSS } from './gremlin/sprite.js'
+import { createSound } from './systems/sound.js'
 import { makeRng, pick, range } from './util/rng.js'
 
 const stage = document.getElementById('stage')
@@ -43,6 +44,9 @@ const spawner = createSpawner({
   destroy: (g) => g.sprite.el.remove(),
 })
 
+const sound = createSound(rng)
+on((type) => sound.playForEvent(type))
+
 on((type, model) => {
   if (type === 'caught') director.recordCatch()
   if (type === 'multiply') {
@@ -70,6 +74,7 @@ window.gremlinNative.onControl((msg) => {
     director.setPaused(paused)
     document.body.classList.toggle('paused', paused)
   }
+  if (msg.type === 'mute') sound.setMuted(msg.value)
   if (msg.type === 'reset') {
     director.reset()
     spawner.clear()
