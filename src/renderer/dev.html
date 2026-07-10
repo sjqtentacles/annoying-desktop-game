@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>gremlin dev harness</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #2b6cb0 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="%232b6cb0"/><circle cx="40" cy="40" r="2" fill="%23ffffff22"/></svg>');
+      user-select: none;
+      cursor: default;
+    }
+    .hittable { pointer-events: auto; position: absolute; }
+    .paused * { animation-play-state: paused !important; }
+  </style>
+  <script>
+    // browser-only stand-in for the preload bridge, so the game runs
+    // outside Electron for visual dev. Not loaded by the real app.
+    window.gremlinNative = {
+      reportHitRects: () => {},
+      hoverHint: () => {},
+      reportStatus: () => {},
+      panic: () => {},
+      onControl: () => {},
+    }
+  </script>
+</head>
+<body>
+  <div id="stage"></div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

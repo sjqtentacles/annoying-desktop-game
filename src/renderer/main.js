@@ -4,11 +4,14 @@ import { createSpawner } from './systems/spawner.js'
 import { createGremlinModel } from './gremlin/behaviors.js'
 import { createSprite, SPRITE_CSS } from './gremlin/sprite.js'
 import { createSound } from './systems/sound.js'
+import { createPopups, POPUP_CSS } from './systems/popups.js'
+import { spawnDecoys, DECOY_CSS } from './systems/decoys.js'
+import { createHud, HUD_CSS } from './systems/hud.js'
 import { makeRng, pick, range } from './util/rng.js'
 
 const stage = document.getElementById('stage')
 const style = document.createElement('style')
-style.textContent = SPRITE_CSS
+style.textContent = SPRITE_CSS + POPUP_CSS + DECOY_CSS + HUD_CSS
 document.head.appendChild(style)
 
 const rng = makeRng((Date.now() ^ (Math.random() * 0xffffffff)) >>> 0)
@@ -27,7 +30,9 @@ const emit = (type, g) => listeners.forEach((fn) => fn(type, g))
 
 const env = {
   cursor: () => cursor,
-  bounds: () => ({ w: window.innerWidth, h: window.innerHeight }),
+  // floor: a backgrounded/occluded page can briefly report a 0-sized
+  // viewport, which would turn the clamp math inside out
+  bounds: () => ({ w: Math.max(window.innerWidth, 320), h: Math.max(window.innerHeight, 240) }),
   params: () => director.params(),
   rng,
   emit,
@@ -47,11 +52,24 @@ const spawner = createSpawner({
 const sound = createSound(rng)
 on((type) => sound.playForEvent(type))
 
+const hud = createHud(stage)
+const popups = createPopups({
+  stage,
+  rng,
+  bounds: env.bounds,
+  emit,
+  onSpawnGremlin: (at) => spawner.spawn({ at }),
+})
+
 on((type, model) => {
-  if (type === 'caught') director.recordCatch()
+  if (type === 'caught') {
+    director.recordCatch()
+    hud.toast(model.pos, `+1  (level ${director.level()})`)
+  }
   if (type === 'multiply') {
     spawner.spawn({ at: { x: model.pos.x + range(rng, -40, 40), y: model.pos.y + range(rng, -40, 40) } })
   }
+  if (type === 'sit') spawnDecoys({ stage, rng, at: model.pos })
 })
 
 function randomGremlin() {
@@ -61,9 +79,8 @@ function randomGremlin() {
 }
 
 function handleMischief(kind) {
-  if (kind === 'popup') return // arrives with the popups module
-  if (kind === 'multiply') return randomGremlin()?.model.command('multiply')
-  randomGremlin()?.model.command(kind) // taunt | chase | screech
+  if (kind === 'popup') return popups.spawn()
+  randomGremlin()?.model.command(kind) // taunt | chase | screech | multiply
 }
 
 // --- control (tray) ---
@@ -85,6 +102,8 @@ window.gremlinNative.onControl((msg) => {
 let last = performance.now()
 let respawnIn = 0
 let statusIn = 0
+
+let usingFallbackClock = false
 
 function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.1) // clamp: sleep/lag must not warp physics
@@ -117,9 +136,27 @@ function frame(now) {
     window.gremlinNative.reportStatus?.({ level: director.level(), score: director.score() })
   }
 
-  requestAnimationFrame(frame)
+  if (!usingFallbackClock) requestAnimationFrame(frame)
 }
 
-spawner.spawn()
+// if rAF is ever throttled to death (occluded window, odd compositors),
+// keep the gremlins alive on a plain timer instead
+setInterval(() => {
+  if (!usingFallbackClock && performance.now() - last > 1500) {
+    usingFallbackClock = true
+    last = performance.now()
+    setInterval(() => frame(performance.now()), 33)
+  }
+}, 1000)
+
+// first gremlin spawns from inside the loop (respawnIn starts at 0), which
+// guarantees layout has real bounds by the time a spawn point is picked
 startHitReporting()
 requestAnimationFrame(frame)
+
+// dev/demo console handle: __gremlinDebug.mischief('screech' | 'taunt' |
+// 'chase' | 'multiply' | 'popup')
+window.__gremlinDebug = {
+  mischief: (kind) => handleMischief(kind),
+  status: () => ({ level: director.level(), score: director.score(), gremlins: spawner.count() }),
+}
