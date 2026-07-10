@@ -1,6 +1,8 @@
 import { app, screen } from 'electron'
 import { createOverlay } from './overlay-window.js'
 import { createClickthrough } from './clickthrough.js'
+import { createTray } from './tray.js'
+import { registerPanicKey } from './hotkeys.js'
 import { wireIpc } from './ipc.js'
 
 const debug = process.argv.includes('--debug')
@@ -15,9 +17,16 @@ if (process.argv.includes('--no-gpu')) app.disableHardwareAcceleration()
 app.whenReady().then(() => {
   if (process.platform === 'darwin') app.dock.hide()
 
-  const win = createOverlay(screen.getPrimaryDisplay(), { debug })
+  // safety valves first — before anything annoying exists
+  registerPanicKey()
+  let win = null
+  const trayCtl = createTray({
+    onControl: (msg) => win?.webContents.send('control', msg),
+  })
+
+  win = createOverlay(screen.getPrimaryDisplay(), { debug })
   const clickthrough = createClickthrough(win)
-  wireIpc(clickthrough)
+  wireIpc(clickthrough, { onStatus: (s) => trayCtl.updateStatus(s) })
 
   if (testHooks) {
     globalThis.__gremlinTest = {
@@ -35,5 +44,5 @@ app.whenReady().then(() => {
   }
 })
 
-// the overlay closing means the app is done (tray keeps it alive later)
+// the overlay closing means the app is done (the tray dies with the app)
 app.on('window-all-closed', () => app.quit())
