@@ -1,5 +1,9 @@
 # Gremlin 👹
 
+[![MIT license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-blue.svg)
+![dependencies](https://img.shields.io/badge/runtime%20deps-0-brightgreen.svg)
+
 A deliberately annoying desktop pet. A small green gremlin lives on top of
 everything on your screen. It wanders around, chases your cursor and **sits on
 it** (while decoy cursors drift away), screeches, blows raspberries, opens fake
@@ -12,6 +16,11 @@ dodging, more frequent mischief. Level 5 is eight gremlins moving at
 
 Everything else on your screen keeps working normally — clicks pass straight
 through the overlay except on a gremlin (or one of its fake popups).
+
+![The gremlin screeching between two fake error dialogs](docs/screenshot.png)
+*Live capture of the overlay: two fake dialogs and one gremlin mid-screech.
+The blue backdrop is added for the screenshot — in reality that entire area is
+transparent, showing your own desktop, and is completely click-through.*
 
 ## The important part: how to make it stop
 
