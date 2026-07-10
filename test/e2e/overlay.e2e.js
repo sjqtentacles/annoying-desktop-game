@@ -44,19 +44,23 @@ test('overlay window mechanics: transparency, click-through flip, safety net, pa
       async () => ((await state()).rects.length > 0 ? state() : null),
       'renderer-reported hit rects'
     )
-    const r = s1.rects[0]
-
-    // cursor over the sprite -> window becomes interactive
-    await app.evaluate(
-      ({}, pt) => globalThis.__gremlinTest.setCursorOverride(pt),
-      { x: s1.bounds.x + r.x + r.w / 2, y: s1.bounds.y + r.y + r.h / 2 }
-    )
-    await until(async () => (await state()).interactive, 'interactive flip on hover')
+    // cursor over the sprite -> window becomes interactive. The sprite moves,
+    // so re-target its current rect on every poll.
+    await until(async () => {
+      const s = await state()
+      const r = s.rects[0]
+      if (!r) return false
+      await app.evaluate(
+        ({}, pt) => globalThis.__gremlinTest.setCursorOverride(pt),
+        { x: s.bounds.x + r.x + r.w / 2, y: s.bounds.y + r.y + r.h / 2 }
+      )
+      return (await state()).interactive
+    }, 'interactive flip on hover')
 
     // cursor leaves (sprite "teleported away") -> safety net restores click-through
     await app.evaluate(({}, pt) => globalThis.__gremlinTest.setCursorOverride(pt), {
-      x: s1.bounds.x + r.x + r.w + 500,
-      y: s1.bounds.y + r.y + r.h + 500,
+      x: s1.bounds.x - 500,
+      y: s1.bounds.y - 500,
     })
     await until(async () => !(await state()).interactive, 'click-through restored by safety net')
 
